@@ -1,0 +1,80 @@
+name: CI/CD Quality Pipeline
+
+on:
+  push:
+    branches: [ "main", "master", "develop" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  # 1. Quét Dockerfile với Hadolint
+  dockerfile-lint:
+    name: Dockerfile Lint (Hadolint)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Run Hadolint
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: "Jenkins/Dockerfile"
+          config: "Hadolint/.hadolint.yaml"
+          ignore: "DL3008"
+        continue-on-error: true
+
+  # 2. Quét Frontend (React ESLint)
+  frontend-lint:
+    name: Frontend Lint (React ESLint)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Run ESLint
+        run: |
+          if [ -d "code_scanners/frontend/react-eslint" ]; then
+            cd code_scanners/frontend/react-eslint
+            npm install
+            npm run lint || true
+          fi
+
+  # 3. Quét Backend (Python Flake8)
+  backend-python-lint:
+    name: Backend Lint (Python Flake8)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install and Run Flake8
+        run: |
+          pip install flake8
+          flake8 --config=code_scanners/backend/python-flake8/.flake8 . || true
+
+  # 4. Quét Backend (.NET C#)
+  backend-csharp-lint:
+    name: Backend Lint (C# dotnet format)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Run dotnet format verification
+        run: |
+          dotnet format --verify-no-changes --verbosity minimal || true

@@ -1,0 +1,26 @@
+[flake8]
+# Cấu hình chuẩn cho Flake8 Linter (Python)
+max-line-length = 100
+exclude =
+    .git,
+    __pycache__,
+    build,
+    dist,
+    .venv,
+    venv,
+    migrations
+
+# Bỏ qua các cảnh báo không cần thiết hoặc xung đột với Black formatter
+ignore =
+    E203, # whitespace before ':' (xung đột với PEP 8 slice format)
+    W503, # line break before binary operator
+    E501  # line too long (đã được max-line-length quản lý)
+
+# Giới hạn độ phức tạp McCabe (Cyclomatic Complexity) tương tự Flake8 tiêu chuẩn
+max-complexity = 10
+
+# Định dạng output để xuất report vào monitoring/reports
+format = default
+show-source = True
+statistics = True
+count = True

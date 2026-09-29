@@ -1,0 +1,16 @@
+# Hadolint configuration file
+# Reference: https://github.com/hadolint/hadolint#configure
+
+failure-threshold: warning
+no-fail: false
+
+# Các rules cần bỏ qua (nếu cần tuỳ biến)
+# ignored:
+#   - DL3008 # Pin versions in apt get install
+#   - DL3018 # Pin versions in apk add
+
+# Trusted registries
+trustedRegistries:
+  - docker.io
+  - ghcr.io
+  - gcr.io

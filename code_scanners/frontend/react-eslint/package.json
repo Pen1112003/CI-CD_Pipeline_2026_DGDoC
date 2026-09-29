@@ -1,0 +1,19 @@
+{
+  "name": "react-eslint-scanner",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ESLint scanner for React / Frontend code - equivalent to Flake8 in Python",
+  "scripts": {
+    "lint": "eslint src/ --ext .js,.jsx,.ts,.tsx",
+    "lint:report:json": "eslint src/ --ext .js,.jsx,.ts,.tsx -f json -o ../../../monitoring/reports/frontend/eslint/eslint-report.json",
+    "lint:report:html": "eslint src/ --ext .js,.jsx,.ts,.tsx -f html -o ../../../monitoring/reports/frontend/eslint/eslint-report.html"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "eslint-plugin-react": "^7.34.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-jsx-a11y": "^6.8.0",
+    "@typescript-eslint/parser": "^7.2.0",
+    "@typescript-eslint/eslint-plugin": "^7.2.0"
+  }
+}

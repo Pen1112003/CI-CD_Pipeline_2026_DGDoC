@@ -1,0 +1,20 @@
+# Official Hadolint Compose Runner
+# Reference: https://github.com/hadolint/hadolint
+
+services:
+  hadolint:
+    image: hadolint/hadolint:latest-debian
+    container_name: hadolint-linter
+    entrypoint: ["hadolint"]
+    command: ["--config", "/root/.config/hadolint.yaml", "-f", "json", "/workspace/Dockerfile"]
+    volumes:
+      - ./..:/workspace:ro
+      - ./.hadolint.yaml:/root/.config/hadolint.yaml:ro
+      - ../monitoring/reports/hadolint:/reports
+    networks:
+      - pipeline_net
+
+networks:
+  pipeline_net:
+    name: cicd_pipeline_network
+    external: true

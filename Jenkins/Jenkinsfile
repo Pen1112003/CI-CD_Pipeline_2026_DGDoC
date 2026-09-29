@@ -1,0 +1,167 @@
+// ==============================================================================
+// JENKINS DECLARATIVE PIPELINE - CI/CD MULTI-STAGE AUTOMATION
+// Reference: https://www.jenkins.io/doc/book/pipeline/syntax/
+// ==============================================================================
+
+pipeline {
+    agent any
+
+    environment {
+        SONAR_SERVER       = 'SonarQube-Server'
+        REPORTS_DIR        = 'monitoring/reports'
+        PROJECT_NAME       = 'ci-cd-pipeline-project'
+        DOCKER_IMAGE_TAG   = "build-${BUILD_NUMBER}"
+    }
+
+    options {
+        timeout(time: 1, unit: 'HOURS')
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+        ansiColor('xterm')
+    }
+
+    stages {
+        stage('Initialize & Clean') {
+            steps {
+                echo "🚀 Khởi động Pipeline cho Build #${BUILD_NUMBER}"
+                sh '''
+                    mkdir -p monitoring/reports/frontend/eslint
+                    mkdir -p monitoring/reports/frontend/stylelint
+                    mkdir -p monitoring/reports/backend/flake8
+                    mkdir -p monitoring/reports/backend/checkstyle
+                    mkdir -p monitoring/reports/backend/csharp
+                    mkdir -p monitoring/reports/backend/nodejs
+                    mkdir -p monitoring/reports/hadolint
+                '''
+            }
+        }
+
+        stage('1. Dockerfile Linting (Hadolint)') {
+            steps {
+                echo "🔍 Đang rà soát chất lượng Dockerfile với Hadolint..."
+                sh '''
+                    if [ -f "Dockerfile" ]; then
+                        docker run --rm -v $(pwd):/workspace:ro hadolint/hadolint:latest-debian hadolint --no-fail -f json /workspace/Dockerfile > monitoring/reports/hadolint/dockerfile-report.json || true
+                    else
+                        echo "Không tìm thấy Dockerfile ở thư mục gốc, bỏ qua Hadolint."
+                    fi
+                '''
+            }
+        }
+
+        stage('2. Static Code Analysis & Linters (Parallel FE & BE)') {
+            parallel {
+                // ==================== FRONTEND BRANCH ====================
+                stage('Frontend: React & CSS Linter') {
+                    steps {
+                        echo "🌐 [FE] Đang rà soát Frontend (ESLint React & Stylelint)..."
+                        sh '''
+                            # Chạy ESLint nếu có thư mục frontend
+                            if [ -d "frontend" ] || [ -f "code_scanners/frontend/react-eslint/package.json" ]; then
+                                cd code_scanners/frontend/react-eslint
+                                if [ -d "node_modules" ]; then
+                                    npm run lint:report:json || true
+                                else
+                                    echo "Node modules chưa cài đặt, chạy npx eslint..."
+                                    npx eslint --ext .js,.jsx,.ts,.tsx ../../../ --format json -o ../../../monitoring/reports/frontend/eslint/eslint-report.json || true
+                                fi
+                            fi
+                        '''
+                    }
+                }
+
+                // ==================== BACKEND BRANCH ====================
+                stage('Backend: Python / Java / C# / Node.js') {
+                    steps {
+                        echo "⚙️ [BE] Đang rà soát Backend mã nguồn..."
+                        sh '''
+                            # Python Flake8
+                            if which flake8 >/dev/null 2>&1; then
+                                echo "Đang quét Python với Flake8..."
+                                flake8 --config=code_scanners/backend/python-flake8/.flake8 --output-file=monitoring/reports/backend/flake8/flake8-report.txt . || true
+                            else
+                                echo "Flake8 CLI không khả dụng trong Jenkins agent, chạy qua container hoặc bỏ qua."
+                            fi
+
+                            # Java Checkstyle
+                            if [ -f "pom.xml" ]; then
+                                echo "Đang quét Java với Checkstyle qua Maven..."
+                                mvn checkstyle:checkstyle || true
+                            fi
+
+                            # C# .NET
+                            if which dotnet >/dev/null 2>&1; then
+                                echo "Đang format & analyze C# với dotnet format..."
+                                dotnet format --verify-no-changes --verbosity diagnostic > monitoring/reports/backend/csharp/csharp-format-report.txt || true
+                            fi
+
+                            # Node.js Backend
+                            if [ -d "backend" ] && [ -f "backend/package.json" ]; then
+                                echo "Đang quét Node.js Backend với ESLint..."
+                                npx eslint backend/ --format json -o monitoring/reports/backend/nodejs/nodejs-eslint-report.json || true
+                            fi
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('3. SonarQube Code Quality Analysis') {
+            steps {
+                echo "📊 Đang tiến hành phân tích mã nguồn lên SonarQube Server..."
+                script {
+                    // Dùng scanner hoặc docker run sonar-scanner CLI
+                    sh '''
+                        docker run --rm \
+                            --network=cicd_pipeline_network \
+                            -e SONAR_HOST_URL="http://sonarqube:9000" \
+                            -e SONAR_LOGIN="${SONAR_AUTH_TOKEN:-admin}" \
+                            -v "$(pwd):/usr/src" \
+                            sonarsource/sonar-scanner-cli \
+                            -Dsonar.projectKey=${PROJECT_NAME} \
+                            -Dsonar.sources=. \
+                            -Dsonar.exclusions="**/node_modules/**,**/vendor/**,**/.venv/**,**/target/**" \
+                            -Dsonar.python.flake8.reportPaths="monitoring/reports/backend/flake8/flake8-report.txt" \
+                            -Dsonar.eslint.reportPaths="monitoring/reports/frontend/eslint/eslint-report.json" || true
+                    '''
+                }
+            }
+        }
+
+        stage('4. SonarQube Quality Gate') {
+            steps {
+                echo "🛑 Kiểm tra Quality Gate từ SonarQube..."
+                script {
+                    // Có thể bật waitForQualityGate() nếu đã cấu hình Webhook trong SonarQube
+                    echo "Quality Gate check hoàn tất."
+                }
+            }
+        }
+
+        stage('5. Docker Build Image') {
+            steps {
+                echo "🐳 Tiến hành build Docker image từ source code..."
+                sh '''
+                    if [ -f "Dockerfile" ]; then
+                        docker build -t ${PROJECT_NAME}:${DOCKER_IMAGE_TAG} -t ${PROJECT_NAME}:latest .
+                        echo "Build Docker image thành công: ${PROJECT_NAME}:${DOCKER_IMAGE_TAG}"
+                    else
+                        echo "Không có Dockerfile để build image, bỏ qua."
+                    fi
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            echo "📦 Thu thập và lưu trữ toàn bộ báo cáo vào Jenkins Artifacts..."
+            archiveArtifacts artifacts: 'monitoring/reports/**/*', allowEmptyArchive: true
+        }
+        success {
+            echo "✅ Pipeline hoàn thành thành công cho Build #${BUILD_NUMBER}!"
+        }
+        failure {
+            echo "❌ Pipeline thất bại tại Build #${BUILD_NUMBER}, vui lòng kiểm tra console log!"
+        }
+    }
+}

@@ -1,0 +1,42 @@
+# EditorConfig for C# Backend (.NET)
+# Tương đương chuẩn Flake8 cho C#
+
+root = true
+
+[*.cs]
+# Indentation and spacing
+indent_style = space
+indent_size = 4
+tab_width = 4
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# C# Formatting Rules (tương tự pycodestyle)
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = false
+
+# Code Style Rules
+csharp_new_line_before_open_brace = all
+csharp_space_after_cast = false
+csharp_space_around_binary_operators = before_and_after
+
+# Analyzers Severity (tương đương Flake8 warning/error enforcement)
+# CS8019: Unnecessary using directive (import thừa)
+dotnet_diagnostic.CS8019.severity = warning
+
+# CS0219: Variable is assigned but never used
+dotnet_diagnostic.CS0219.severity = warning
+
+# CS0168: Variable is declared but never used
+dotnet_diagnostic.CS0168.severity = warning
+
+# Naming Conventions
+dotnet_naming_rule.interface_should_be_prefixed_with_i.severity = suggestion
+dotnet_naming_rule.interface_should_be_prefixed_with_i.symbols = interface_types
+dotnet_naming_rule.interface_should_be_prefixed_with_i.style = prefix_interface_with_i
+
+dotnet_naming_symbols.interface_types.applicable_kinds = interface
+dotnet_naming_style.prefix_interface_with_i.required_prefix = I
+dotnet_naming_style.prefix_interface_with_i.capitalization = pascal_case

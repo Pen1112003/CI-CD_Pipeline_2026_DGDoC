@@ -1,0 +1,24 @@
+{
+  "env": {
+    "node": true,
+    "es2021": true
+  },
+  "extends": [
+    "eslint:recommended",
+    "plugin:security/recommended"
+  ],
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "commonjs"
+  },
+  "plugins": [
+    "security"
+  ],
+  "rules": {
+    "no-console": "off",
+    "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
+    "no-process-exit": "warn",
+    "security/detect-object-injection": "warn",
+    "security/detect-non-literal-fs-filename": "warn"
+  }
+}

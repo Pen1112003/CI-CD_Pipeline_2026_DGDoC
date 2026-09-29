@@ -1,0 +1,18 @@
+{
+  "name": "nodejs-backend-eslint-scanner",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ESLint scanner for Node.js Backend services - equivalent to Flake8 in Python",
+  "scripts": {
+    "lint": "eslint src/ --ext .js,.ts",
+    "lint:report:json": "eslint src/ --ext .js,.ts -f json -o ../../../monitoring/reports/backend/nodejs/nodejs-eslint-report.json",
+    "lint:report:html": "eslint src/ --ext .js,.ts -f html -o ../../../monitoring/reports/backend/nodejs/nodejs-eslint-report.html"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-security": "^2.1.1",
+    "@typescript-eslint/parser": "^7.2.0",
+    "@typescript-eslint/eslint-plugin": "^7.2.0"
+  }
+}

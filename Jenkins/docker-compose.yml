@@ -1,0 +1,32 @@
+# Official Jenkins LTS Compose
+# Reference: https://www.jenkins.io/doc/book/installing/docker/
+
+services:
+  jenkins:
+    image: jenkins/jenkins:lts-jdk17
+    container_name: jenkins-lts
+    restart: unless-stopped
+    privileged: true
+    user: root
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    environment:
+      - JAVA_OPTS=-Djenkins.install.runSetupWizard=true
+      - JENKINS_OPTS=--prefix=
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ../monitoring/logs/jenkins:/var/log/jenkins
+      - ../monitoring/reports:/reports
+    networks:
+      - pipeline_net
+
+volumes:
+  jenkins_home:
+    name: jenkins_home_data
+
+networks:
+  pipeline_net:
+    name: cicd_pipeline_network
+    external: true

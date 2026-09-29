@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+          "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+          "https://checkstyle.org/dtds/configuration_1_3.dtd">
+
+<!--
+    Checkstyle configuration for Java Backend
+    Tương đương chuẩn Flake8 trong Python:
+    - Kiểm tra naming conventions
+    - Kiểm tra độ dài dòng (MaxLineLength)
+    - Kiểm tra import thừa / wildcard import
+    - Kiểm tra độ phức tạp chu trình (Cyclomatic Complexity)
+-->
+<module name="Checker">
+    <property name="severity" value="warning"/>
+    <property name="fileExtensions" value="java, properties, xml"/>
+
+    <!-- Kiểm tra độ dài dòng tối đa 120 ký tự (tương tự max-line-length của flake8) -->
+    <module name="LineLength">
+        <property name="max" value="120"/>
+        <property name="ignorePattern" value="^package.*|^import.*|a href|href|http://|https://|ftp://"/>
+    </module>
+
+    <module name="TreeWalker">
+        <!-- Naming Conventions -->
+        <module name="PackageName"/>
+        <module name="TypeName"/>
+        <module name="MethodName"/>
+        <module name="MemberName"/>
+        <module name="ParameterName"/>
+        <module name="LocalVariableName"/>
+        <module name="ConstantName"/>
+
+        <!-- Imports (tương tự pyflakes phát hiện import thừa/sai) -->
+        <module name="AvoidStarImport"/>
+        <module name="IllegalImport"/>
+        <module name="RedundantImport"/>
+        <module name="UnusedImports"/>
+
+        <!-- Đo lường độ phức tạp (tương tự McCabe trong Flake8) -->
+        <module name="CyclomaticComplexity">
+            <property name="max" value="10"/>
+        </module>
+
+        <!-- Khối mã và khoảng trắng -->
+        <module name="NeedBraces"/>
+        <module name="LeftCurly"/>
+        <module name="RightCurly"/>
+        <module name="EmptyBlock"/>
+    </module>
+</module>
